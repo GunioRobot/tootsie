@@ -1,0 +1,12 @@
+source 'http://rubygems.org'
+
+gem 'json'
+gem 'sinatra'
+gem 'activesupport'
+gem 'httpclient'
+gem 'builder'
+gem 'mime-types'
+gem 'xml-simple'
+gem 'thin'
+gem 's3'
+gem 'sqs'

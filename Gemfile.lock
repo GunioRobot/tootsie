@@ -1,0 +1,37 @@
+GEM
+  remote: http://rubygems.org/
+  specs:
+    activesupport (3.0.0)
+    builder (2.1.2)
+    daemons (1.1.0)
+    eventmachine (0.12.10)
+    httpclient (2.1.5.2)
+    json (1.4.6)
+    mime-types (1.16)
+    proxies (0.2.1)
+    rack (1.2.1)
+    s3 (0.3.7)
+      proxies
+    sinatra (1.0)
+      rack (>= 1.0)
+    sqs (0.1.2)
+    thin (1.2.7)
+      daemons (>= 1.0.9)
+      eventmachine (>= 0.12.6)
+      rack (>= 1.0.0)
+    xml-simple (1.0.12)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  activesupport
+  builder
+  httpclient
+  json
+  mime-types
+  s3
+  sinatra
+  sqs
+  thin
+  xml-simple

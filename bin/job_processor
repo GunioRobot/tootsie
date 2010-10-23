@@ -1,0 +1,39 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+require 'bundler'
+Bundler.setup
+
+$:.unshift(File.join(File.dirname(__FILE__), "/../lib"))
+require 'tranz'
+
+environment = :development
+
+ARGV.options do |opts|
+  opts.banner = "Usage: #{File.basename($0)} [OPTIONS] [start | stop | restart | status]"
+  opts.separator ""
+  opts.on("-e", "--environment=env", String, 
+    "Environment to run in (default: #{environment})") do |value| 
+    environment = value
+  end
+  opts.on("-h", "--help", "Show this help message.") do
+    puts opts
+    exit
+  end
+  opts.parse!
+  if ARGV.empty?
+    puts "Nothing to do. Run with -h for help."
+    exit
+  end
+end
+
+controller = Tranz::Daemon.new(
+  :root => File.join(File.dirname(__FILE__), "/.."),
+  :pid_file => File.join(File.dirname(__FILE__), "/../tmp/job_processor.pid"),
+  :log_file => File.join(File.dirname(__FILE__), "/../log/job_processor.log"))
+controller.on_spawn do
+  app = Tranz::Application.new(:environment => environment, :logger => controller.logger)
+  app.configure!
+  app.processor.run!
+end
+controller.control(ARGV)
