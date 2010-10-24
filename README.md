@@ -20,9 +20,11 @@ Installation
 Running
 -------
 
-* Start the job processor with `bin/job_processor start`.
-* Start the web service with `bin/web_service start`.
-* Jobs may now be posted to the web service API. For example:
+Start the job processor with `bin/job_processor start`.
+
+Start the web service with `bin/web_service start`.
+
+Jobs may now be posted to the web service API. For example:
 
     $ cat << END | curl -d @- -vs http://localhost:9090/job
     input_url=http://example.com/test.3gp&
