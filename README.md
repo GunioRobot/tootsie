@@ -1,7 +1,65 @@
 Tranz
 -----
 
-Tranz is a simple transcoding application written in Ruby. Tranz uses FFmpeg for transcoding of video and audio, uses Amazon S3 (optionally) for storage, and Amazon SQS (optionally) for internal job queue management.
+Tranz is a simple transcoding application written in Ruby. Tranz uses FFmpeg for transcoding of video and audio and supports Amazon S3 for storage, and Amazon Simple Queue Service for internal job queue management.
+
+Tranz is divided into multiple parts:
+
+* Job processor: finds new transcoding jobs and executes them.
+* FFmpeg: does the actual transcoding.
+* Queue: currently local file-based queues (for testing) and Amazon Simple Queue Service are supported.
+* Storage: currently web servers and Amazon S3 are supported.
+* Web service: A small RESTful API for managing jobs.
+
+The job processor
+-----------------
+
+The job processor pops jobs from a queue and processes them. Each job specifies an input, an output, and transcoding parameters. Optionally the job may also specify a notification URL which is invoked to inform the caller about job progress.
+
+The input may be an HTTP resource or an Amazon S3 bucket resource. S3 buckets must have the appropriate ACLs so that Tranz can read the files; if the input file is not public, Tranz must be run with an AWS access key that is granted read access to the file.
+
+The output may be an HTTP URL to which the encoded file should be POSTed, or an Amazon S3 bucket path where the encoded file may be stored. Tranz will need write permissions to any S3 buckets.
+
+If a notification URL is provided, events will be POSTed to it. There are three types of events, designated by the `event` parameter:
+
+* `event=started`: The job was started.
+* `event=complete`: The job was complete. The parameter `url` will specify the completed file, and the parameter `time_taken` will count the number of seconds that the job took to complete.
+* `event=failed`: The job failed. The parameter `reason` will contain a textual explanation for the failure.
+
+FFmpeg
+------
+
+FFmpeg is invoked for each job to perform the transcoding. FFmpeg is abstracted behind set of generic options specifying format, codecs, bit rate and so on.
+
+Web service
+-----------
+
+The web service is a small Sinatra app that supports job control methods. Currently defined API:
+
+* `/job`: POST a job to this action to schedule a job. Returns 201 if the job was created. Parameters:
+
+  * `input_url`: URL to input file, either an HTTP URL or one with the format `s3:bucketname/path/to/file`.
+  * `output_url`: URL to output resource, either an HTTP URL which accepts POSTs, or a URL with format `s3:bucketname/path/to/file`.
+  * `output_options[s3_acl]`: For S3 outputs, one of `private` (default), `public-read`, `public-read-write` or `authenticated-read`.
+  * `output_options[s3_storage_class]`: For S3, either `standard` (default) or `reduced_redundancy`.
+  * `notification_url`: Optional notification URL. Progress will be reported using POSTs.
+  * `transcoding_options[audio_sample_rate]`: Audio sample rate, in herz.
+  * `transcoding_options[audio_bitrate]`: Audio bitrate, in bits per second.
+  * `transcoding_options[audio_codec]`: Audio codec name, eg. `mp4`.
+  * `transcoding_options[video_frame_rate]`: video frame rate, in herz.
+  * `transcoding_options[video_bitrate]`: video bitrate, in bits per second.
+  * `transcoding_options[video_codec]`: video codec name, eg. `mp4`.
+  * `transcoding_options[width]`: desired video frame width in pixels.
+  * `transcoding_options[height]`: desired video frame height in pixels.
+  * `transcoding_options[format]`: File format.
+  * `transcoding_options[content_type]`: Content type of resultant file. Tranz will not be able to guess this at the moment.
+
+Current limitations
+-------------------
+
+* Daemon supports only one job processor thread at a time.
+* Transcoding options are incomplete.
+* No client access control; anyone can submit jobs.
 
 Requirements
 ------------
@@ -26,7 +84,7 @@ Start the web service with `bin/web_service start`.
 
 Jobs may now be posted to the web service API. For example:
 
-    $ cat << END | curl -d @- -vs http://localhost:9090/job
+    $ cat << END | curl -d @- http://localhost:9090/job
     input_url=http://example.com/test.3gp&
     output_url=s3:mybucket/test.mp4&
     output_options[s3_acl]=public_read&
