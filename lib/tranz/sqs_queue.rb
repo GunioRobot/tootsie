@@ -10,6 +10,7 @@ module Tranz
   class SqsQueue
     
     def initialize(queue_name, sqs_service)
+      @logger = Application.get.logger
       @sqs_service = sqs_service
       @queue = @sqs_service.queues.find_first(queue_name)
       unless @queue
@@ -28,23 +29,46 @@ module Tranz
     end
     
     def push(job)
-      @queue.create_message(job.to_json)
+      retries_left = 5
+      begin
+        return @queue.create_message(job.to_json)
+      rescue SystemExit, Interrupt
+        raise
+      rescue Exception => exception
+        if retries_left > 0
+          @logger.warn("Writing queue failed with exception (#{exception.message}), will retry")
+          retries_left -= 1
+          sleep(0.5)
+          retry
+        else
+          @logger.error("Writing queue failed with exception #{exception.class}: #{exception.message}")
+          raise exception
+        end
+      end
     end
     
     def pop(options = {})
+      job = nil
       loop do
-        message = @queue.message(5)
+        begin
+          message = @queue.message(5)
+        rescue SystemExit, Interrupt
+          raise
+        rescue Exception => exception
+          @logger.error("Reading queue failed with exception #{exception.class}: #{exception.message}")
+          break unless options[:wait]
+          sleep(0.5)
+          retry
+        end
         if message
-          job_data = JSON.parse(message.body)
+          job = Job.new(JSON.parse(message.body))
           message.destroy
-          return Job.new(job_data)
+          break
         end
-        if options[:wait]
-          sleep(1.0)
-        else
-          return nil
-        end
+        break unless options[:wait]
+        sleep(1.0)
       end
+      job
     end
     
   end
