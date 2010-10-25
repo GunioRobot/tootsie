@@ -16,15 +16,21 @@ The job processor
 
 The job processor pops jobs from a queue and processes them. Each job specifies an input, an output, and transcoding parameters. Optionally the job may also specify a notification URL which is invoked to inform the caller about job progress.
 
-The input may be an HTTP resource or an Amazon S3 bucket resource. S3 buckets must have the appropriate ACLs so that Tranz can read the files; if the input file is not public, Tranz must be run with an AWS access key that is granted read access to the file.
+Supported inputs at the moment:
 
-The output may be an HTTP URL to which the encoded file should be POSTed, or an Amazon S3 bucket path where the encoded file may be stored. Tranz will need write permissions to any S3 buckets.
+* HTTP resource. Currently only public (non-authenticated) resources are supported.
+* Amazon S3 bucket resource. S3 buckets must have the appropriate ACLs so that Tranz can read the files; if the input file is not public, Tranz must be run with an AWS access key that is granted read access to the file.
 
-If a notification URL is provided, events will be POSTed to it. There are three types of events, designated by the `event` parameter:
+Supported outputs:
 
-* `event=started`: The job was started.
-* `event=complete`: The job was complete. The parameter `url` will specify the completed file, and the parameter `time_taken` will count the number of seconds that the job took to complete.
-* `event=failed`: The job failed. The parameter `reason` will contain a textual explanation for the failure.
+* HTTP resource. The encoded file will be `POST`ed to a URL.
+* Amazon S3 bucket resource. Tranz will need write permissions to any S3 buckets.
+
+If a notification URL is provided, events will be sent to it using `POST` requests. There are three types of events, indicated by the `event` parameter:
+
+* `started`: The job was started.
+* `complete`: The job was complete. The parameter `url` will specify the completed file, and the parameter `time_taken` will count the number of seconds that the job took to complete.
+* `failed`: The job failed. The parameter `reason` will contain a textual explanation for the failure.
 
 FFmpeg
 ------
