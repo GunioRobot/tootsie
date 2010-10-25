@@ -1,15 +1,17 @@
 Tranz
 -----
 
-Tranz is a simple transcoding application written in Ruby. Tranz uses FFmpeg for transcoding of video and audio and supports Amazon S3 for storage, and Amazon Simple Queue Service for internal job queue management.
+Tranz is a simple audio/video transcoding application written in Ruby. Tranz uses FFmpeg for transcoding of video and audio and supports Amazon S3 for storage, and Amazon Simple Queue Service for internal job queue management.
 
-Tranz is divided into multiple parts:
+Tranz is divided into multiple independent parts:
 
 * Job processor: finds new transcoding jobs and executes them.
 * FFmpeg: does the actual transcoding.
 * Queue: currently local file-based queues (for testing) and Amazon Simple Queue Service are supported.
 * Storage: currently web servers and Amazon S3 are supported.
 * Web service: A small RESTful API for managing jobs.
+
+The framework is designed to be easily pluggable, and to let you pick the parts you need to build a custom transcoding service.
 
 The job processor
 -----------------
