@@ -9,9 +9,9 @@ module Tranz
     
     def initialize(url)
       @url = url
-      tempfile = Tempfile.new('tranz')
-      @file_name = tempfile.path
-      tempfile.close
+      @temp_file = Tempfile.new('tranz')
+      @temp_file.close
+      @file_name = @temp_file.path
     end
     
     # Put data into the output. Options:
@@ -25,10 +25,10 @@ module Tranz
       case @url
         when /^s3:([^\/]+)\/+(.+)$/
           bucket_name, path = $1, $2
-          File.open(@file_name, 'r') do |file|
+          File.open(@temp_file.path, 'r') do |file|
             s3_service = Tranz::Application.get.s3_service
-            bucket = s3_service.buckets.find(bucket_name)
-            if bucket
+            begin
+              bucket = s3_service.buckets.find(bucket_name)
               object = bucket.objects.build(path)
               object.acl = options[:s3_acl] || :private
               object.content_type = @content_type if @content_type
@@ -36,12 +36,12 @@ module Tranz
               object.content = file
               object.save
               @result_url = object.url
-            else
+            rescue ::S3::Error::NoSuchBucket
               raise IncompatibleOutputError, "Bucket #{bucket_name} not found"
             end
           end
         when /^http(s?):\/\//
-          File.open(@file_name, 'wb') do |file|
+          File.open(@temp_file.path, 'wb') do |file|
             HTTPClient.new.get_content(@url) do |chunk|
               file << chunk
             end
@@ -52,7 +52,7 @@ module Tranz
     end
     
     def close
-      FileUtils.rm(@file_name) rescue nil
+      @temp_file.unlink
     end
     
     attr_reader :url
