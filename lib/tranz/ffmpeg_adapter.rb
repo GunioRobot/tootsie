@@ -29,10 +29,10 @@ module Tranz
         arguments['vcodec'] = options[:video_codec] if options[:video_codec]
         arguments['b'] = options[:video_bitrate] if options[:video_bitrate]
         arguments['r'] = options[:video_frame_rate] if options[:video_frame_rate]
-        arguments['f'] = options[:format] if options[:format]
         arguments['s'] = "#{options[:width]}x#{options[:height]}" if options[:width] or options[:height]
         arguments['sameq'] = true
       end
+      arguments['f'] = options[:format] if options[:format]
       arguments['xerror'] = true
       arguments['y'] = true
       arguments['loglevel'] = 'verbose'
