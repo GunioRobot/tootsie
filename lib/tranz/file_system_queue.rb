@@ -13,6 +13,10 @@ module Tranz
       FileUtils.mkdir_p(@directory)
     end
     
+    def count
+      Dir.glob(File.join(@directory, "*.json")).length
+    end
+    
     def push(job)
       Tempfile.open('tranz') do |tempfile|
         tempfile << job.to_json

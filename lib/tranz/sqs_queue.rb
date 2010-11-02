@@ -28,6 +28,10 @@ module Tranz
       end
     end
     
+    def count
+      @queue.attributes['ApproximateNumberOfMessages'].to_i
+    end
+    
     def push(job)
       retries_left = 5
       begin

@@ -16,6 +16,11 @@ module Tranz
       201
     end
     
+    get '/status' do
+      queue = Application.get.queue
+      {'queue_count' => queue.count}.to_json
+    end
+    
     private
     
       def logger
