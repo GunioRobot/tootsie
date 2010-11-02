@@ -6,6 +6,10 @@ module Tranz
     set :sessions, false
     set :run, false
     
+    get '/' do
+      404
+    end
+    
     post '/job' do
       logger.info "Handling job: #{params.inspect}"
       job = Job.new(params)
