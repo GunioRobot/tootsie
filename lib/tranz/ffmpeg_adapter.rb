@@ -6,7 +6,7 @@ module Tranz
   class FfmpegAdapter
     
     def initialize(options = {})
-      @logger = options[:logger]
+      @logger = Application.get.logger
       @ffmpeg_binary = 'ffmpeg'
       @ffmpeg_arguments = {}
       @ffmpeg_arguments['threads'] = (options[:thread_count] || 1)
@@ -47,6 +47,7 @@ module Tranz
       }.join(' ')
       command_line << ' '
       command_line << "'#{output_filename}' 2>&1"
+      @logger.info("Starting FFmpeg with command line: #{command_line}"
 
       progress, expected_duration = @progress, nil
       IO.popen(command_line, 'r') do |output|
@@ -66,7 +67,7 @@ module Tranz
             progress.call(elapsed_time, expected_duration) if elapsed_time
           end
           @output << line
-          @logger.info("[ffmpeg] #{line.strip}") if @logger
+          @logger.info("[ffmpeg] #{line.strip}")
         end
       end
 
@@ -84,7 +85,6 @@ module Tranz
     
     attr_accessor :ffmpeg_binary
     attr_accessor :ffmpeg_arguments
-    attr_accessor :logger
     
     # Output captured from FFmpeg command line tool so far.
     attr_reader :output

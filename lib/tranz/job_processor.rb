@@ -34,9 +34,7 @@ module Tranz
           begin
             last_notified = nil
             elapsed_time = Benchmark.realtime {
-              adapter = Tranz::FfmpegAdapter.new(
-                :logger => @logger,
-                :thread_count => Application.get.configuration.ffmpeg_thread_count)
+              adapter = Tranz::FfmpegAdapter.new(:thread_count => Application.get.configuration.ffmpeg_thread_count)
               adapter.progress = lambda { |seconds, total_seconds|
                 now = Time.now
                 if last_notified.nil? or now - last_notified > 10.seconds
