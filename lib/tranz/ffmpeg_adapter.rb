@@ -47,7 +47,7 @@ module Tranz
       }.join(' ')
       command_line << ' '
       command_line << "'#{output_filename}' 2>&1"
-      @logger.info("Starting FFmpeg with command line: #{command_line}"
+      @logger.info("Starting FFmpeg with command line: #{command_line}")
 
       progress, expected_duration = @progress, nil
       IO.popen(command_line, 'r') do |output|
