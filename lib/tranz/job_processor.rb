@@ -51,7 +51,7 @@ module Tranz
                 job.transcoding_options)
             }                
             output.content_type = job.transcoding_options[:content_type] if job.transcoding_options[:content_type]
-            output.put!(job.output_options || {})
+            output.put!(job.output_options)
             
             job.notify!(
               :event => :completed,

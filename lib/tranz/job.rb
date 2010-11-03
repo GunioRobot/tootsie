@@ -4,25 +4,32 @@ module Tranz
   
   class Job
     
-    def initialize(attributes = nil)
-      @attributes = {}.with_indifferent_access
-      @attributes.merge!(attributes) if attributes
-      @attributes[:transcoding_options] ||= {}.with_indifferent_access
-      @attributes[:output_options] ||= {}.with_indifferent_access
-      @attributes[:retries_left] ||= 5
-      @attributes[:created_at] ||= Time.now
+    def initialize(attributes = {})
+      attributes = attributes.with_indifferent_access
+      @input_url = attributes[:input_url]
+      @output_url = attributes[:output_url]
+      @output_options = (attributes[:output_options] || {}).with_indifferent_access
+      @notification_url = attributes[:notification_url]
+      @transcoding_options = (attributes[:transcoding_options] || {}).with_indifferent_access
+      @retries_left = attributes[:retries_left] || 5
+      @access_key = attributes[:access_key]
+      @created_at = Time.now
     end
     
     def valid?
-      return false unless
-        @attributes[:input_url] and
-        @attributes[:output_options] and
-        @attributes[:transcoding_options]
-      return true
+      return (@input_url and @output_options and @transcoding_options ? true : false)
     end
     
     def to_json
-      return @attributes.to_json
+      return {
+        :input_url => @input_url,
+        :output_url => @output_url,
+        :output_options => @output_options,
+        :notification_url => @notification_url,
+        :transcoding_options => @transcoding_options,
+        :retries_left => @retries_left,
+        :access_key => @access_key,
+      }.to_json        
     end
     
     # Notify the caller of this job with some message.
@@ -36,20 +43,13 @@ module Tranz
       end
     end
     
-    def method_missing(name, *args, &block)
-      if name =~ /(.*)=$/
-        key = $1
-        if @attributes.include?($1)
-          @attributes[key] = args.first
-          return
-        end
-      end
-      if @attributes.include?(name.to_s) and not block
-        return @attributes[name]
-      end
-      super
-    end
-    
+    attr_accessor :input_url
+    attr_accessor :output_url
+    attr_accessor :output_options
+    attr_accessor :notification_url
+    attr_accessor :transcoding_options
+    attr_accessor :retries_left
+    attr_accessor :created_at
     attr_accessor :access_key
     
   end
