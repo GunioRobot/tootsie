@@ -36,9 +36,9 @@ module Tranz
       if false
         # TODO: Only in newer FFmpeg versions
         arguments['xerror'] = true
+        arguments['loglevel'] = 'verbose'
       end
       arguments['y'] = true
-      arguments['loglevel'] = 'verbose'
       arguments['v'] = 1
       command_line = "#{@ffmpeg_binary} "
       command_line << "-i '#{input_filename}' "
