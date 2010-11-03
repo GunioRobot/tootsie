@@ -33,7 +33,10 @@ module Tranz
         arguments['sameq'] = true
       end
       arguments['f'] = options[:format] if options[:format]
-      arguments['xerror'] = true
+      if false
+        # TODO: Only in newer FFmpeg versions
+        arguments['xerror'] = true
+      end
       arguments['y'] = true
       arguments['loglevel'] = 'verbose'
       arguments['v'] = 1
