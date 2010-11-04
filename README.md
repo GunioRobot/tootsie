@@ -57,6 +57,7 @@ The web service is a small Sinatra app that supports job control methods. Curren
   * `thumbnail_options[height]`: Desired height of thumbnail, defaults to output height.
   * `thumbnail_options[at_seconds]`: Desired point (in seconds) at which the thumbnail frame should be captured. Defaults to 50% into stream.
   * `thumbnail_options[at_fraction]`: Desired point (in percentage) at which the thumbnail frame should be captured. Defaults to 50% into stream.
+  * `thumbnail_options[force_aspect_ratio]`: If `true`, force aspect ratio; otherwise aspect is preserved when computing dimensions.
   * `transcoding_options[audio_sample_rate]`: Audio sample rate, in herz.
   * `transcoding_options[audio_bitrate]`: Audio bitrate, in bits per second.
   * `transcoding_options[audio_codec]`: Audio codec name, eg. `mp4`.
