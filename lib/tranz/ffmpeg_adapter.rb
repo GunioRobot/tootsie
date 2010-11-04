@@ -10,11 +10,17 @@ module Tranz
       @ffmpeg_binary = 'ffmpeg'
       @ffmpeg_arguments = {}
       @ffmpeg_arguments['threads'] = (options[:thread_count] || 1)
+      @ffmpeg_arguments['v'] = 1
+      if false
+        # TODO: Only in newer FFmpeg versions
+        @ffmpeg_arguments['xerror'] = true
+        @ffmpeg_arguments['loglevel'] = 'verbose'
+      end
+      @ffmpeg_arguments['y'] = true
     end
     
     # Transcode a file by taking an input file and writing an output file.
     def transcode(input_filename, output_filename, options = {})
-      @output = ''
       arguments = @ffmpeg_arguments.dup
       if options[:audio_codec].to_s == 'none'
         arguments['an'] = true
@@ -33,53 +39,47 @@ module Tranz
         arguments['sameq'] = true
       end
       arguments['f'] = options[:format] if options[:format]
-      if false
-        # TODO: Only in newer FFmpeg versions
-        arguments['xerror'] = true
-        arguments['loglevel'] = 'verbose'
-      end
-      arguments['y'] = true
-      arguments['v'] = 1
-      command_line = "#{@ffmpeg_binary} "
-      command_line << "-i '#{input_filename}' "
-      command_line << arguments.map { |k, v|
-        (v.is_a?(TrueClass) or v.is_a?(FalseClass)) ? "-#{k}" : "-#{k} '#{v}'"
-      }.join(' ')
-      command_line << ' '
-      command_line << "'#{output_filename}' 2>&1"
-      @logger.info("Starting FFmpeg with command line: #{command_line}")
 
       progress, expected_duration = @progress, nil
-      IO.popen(command_line, 'r') do |output|
-        output.each_line do |line|
-          if progress
-            case line
-              when /^\s*Duration: (\d+):(\d+):(\d+)\./
-                unless expected_duration
-                  hours, minutes, seconds = $1.to_i, $2.to_i, $3.to_i
-                  expected_duration = seconds + minutes * 60 + hours * 60 * 60
-                end
-              when /^frame=.* time=(\d+)\./
-                if expected_duration
-                  elapsed_time = $1.to_i
-                end
-            end
-            progress.call(elapsed_time, expected_duration) if elapsed_time
+      result_width, result_height = nil
+      run_ffmpeg(input_filename, output_filename, arguments) do |line|
+        if progress
+          case line
+            when /^\s*Duration: (\d+):(\d+):(\d+)\./
+              unless expected_duration
+                hours, minutes, seconds = $1.to_i, $2.to_i, $3.to_i
+                expected_duration = seconds + minutes * 60 + hours * 60 * 60
+              end
+            when /^frame=.* time=(\d+)\./
+              if expected_duration
+                elapsed_time = $1.to_i
+              end
+            when /Stream.*Video: .*, (\d+)x(\d+)\s/
+              unless result_width and result_height
+                result_width, result_height = $1.to_i, $2.to_i
+              end
           end
-          @output << line
-          @logger.info("[ffmpeg] #{line.strip}")
+          progress.call(elapsed_time, expected_duration) if elapsed_time
         end
       end
 
-      status = $?
-      if status.exited?       
-        raise FfmpegAdapterExecutionFailed, "FFmpeg failed with exit code #{status.exitstatus}" if status.exitstatus != 0
-      elsif status.stopped?
-        raise FfmpegAdapterExecutionFailed, "FFmpeg stopped unexpectedly with signal #{status.stopsig}"
-      elsif status.signaled?
-        raise FfmpegAdapterExecutionFailed, "FFmpeg died unexpectedly by signal #{status.termsig}"
-      else
-        raise FfmpegAdapterExecutionFailed, "FFmpeg died unexpectedly"
+      thumbnail_options = options[:thumbnail]
+      if thumbnail_options
+        thumb_width = thumbnail_options[:width].try(:to_i) || options[:width].try(:to_i)
+        thumb_height = thumbnail_options[:height].try(:to_i) || options[:height].try(:to_i)
+        if not thumbnail_options[:force_aspect_ratio] and result_width and result_height
+          thumb_height = (thumb_width / (result_width / result_height.to_f)).to_i
+        end
+        at_seconds = thumbnail_options[:at_seconds].try(:to_f)
+        at_seconds ||= (expected_duration || 0) * (thumbnail_options[:at_fraction].try(:to_f) || 0.5)
+        @logger.info("Getting thumbnail frame (#{thumb_width}x#{thumb_height}) with FFmpeg at #{at_seconds} seconds")
+        run_ffmpeg(input_filename, thumbnail_options[:filename], @ffmpeg_arguments.merge(
+          :ss => at_seconds,
+          :vcodec => :mjpeg,
+          :vframes => 1,
+          :an => true,
+          :f => :rawvideo,
+          :s => "#{thumb_width}x#{thumb_height}"))
       end
     end
     
@@ -92,6 +92,37 @@ module Tranz
     # Progress reporter that implements +call(seconds, total_seconds)+ to record
     # transcoding progress.
     attr_accessor :progress
+    
+    private
+    
+      def run_ffmpeg(input_filename, output_filename, arguments, &block)
+        command_line = @ffmpeg_binary.dup
+        command_line << " -i '#{input_filename}' "
+        command_line << arguments.map { |k, v|
+          (v.is_a?(TrueClass) or v.is_a?(FalseClass)) ? "-#{k}" : "-#{k} '#{v}'"
+        }.join(' ')
+        command_line << ' '
+        command_line << "'#{output_filename}' 2>&1"
+        @logger.info("Starting FFmpeg with command line: #{command_line}")
+        @output = ''
+        IO.popen(command_line, 'r') do |output|
+          output.each_line do |line|
+            @output << line
+            @logger.info("[ffmpeg] #{line.strip}")
+            yield line if block
+          end
+        end
+        status = $?
+        if status.exited?       
+          raise FfmpegAdapterExecutionFailed, "FFmpeg failed with exit code #{status.exitstatus}" if status.exitstatus != 0
+        elsif status.stopped?
+          raise FfmpegAdapterExecutionFailed, "FFmpeg stopped unexpectedly with signal #{status.stopsig}"
+        elsif status.signaled?
+          raise FfmpegAdapterExecutionFailed, "FFmpeg died unexpectedly by signal #{status.termsig}"
+        else
+          raise FfmpegAdapterExecutionFailed, "FFmpeg died unexpectedly"
+        end
+      end
 
   end
     

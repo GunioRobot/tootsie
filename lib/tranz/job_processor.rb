@@ -32,31 +32,41 @@ module Tranz
           input.get!
           output = Output.new(job.output_url)
           begin
-            last_notified = nil
-            elapsed_time = Benchmark.realtime {
-              adapter = Tranz::FfmpegAdapter.new(:thread_count => Application.get.configuration.ffmpeg_thread_count)
-              adapter.progress = lambda { |seconds, total_seconds|
-                now = Time.now
-                if last_notified.nil? or now - last_notified > 10.seconds
-                  last_notified = now
-                  job.notify!(
-                    :event => :progress,
-                    :seconds => seconds,
-                    :total_seconds => total_seconds)
-                end
-              }
-              adapter.transcode(
-                input.file_name,
-                output.file_name,
-                job.transcoding_options)
-            }                
-            output.content_type = job.transcoding_options[:content_type] if job.transcoding_options[:content_type]
-            output.put!(job.output_options)
+            thumbnail = Output.new(job.thumbnail_url) if job.thumbnail_url
+            begin
+              adapter_options = job.transcoding_options.dup
+              adapter_options[:thumbnail] = job.thumbnail_options.merge(:filename => thumbnail.file_name) if thumbnail
+
+              elapsed_time = Benchmark.realtime {
+                last_notified = nil
+                adapter = Tranz::FfmpegAdapter.new(:thread_count => Application.get.configuration.ffmpeg_thread_count)
+                adapter.progress = lambda { |seconds, total_seconds|
+                  now = Time.now
+                  if last_notified.nil? or now - last_notified > 10.seconds
+                    last_notified = now
+                    job.notify!(
+                      :event => :progress,
+                      :seconds => seconds,
+                      :total_seconds => total_seconds)
+                  end
+                }
+                adapter.transcode(
+                  input.file_name,
+                  output.file_name,
+                  adapter_options)
+              }                
+              output.content_type = job.transcoding_options[:content_type] if job.transcoding_options[:content_type]
+              output.put!(job.output_options)
+              
+              thumbnail.put!(job.thumbnail_options) if thumbnail
             
-            job.notify!(
-              :event => :completed,
-              :url => output.result_url,
-              :time_taken => elapsed_time)
+              job.notify!(
+                :event => :completed,
+                :url => output.result_url,
+                :time_taken => elapsed_time)
+            ensure
+              thumbnail.try(:close)
+            end
           ensure
             output.close
           end

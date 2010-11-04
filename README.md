@@ -50,7 +50,13 @@ The web service is a small Sinatra app that supports job control methods. Curren
   * `output_url`: URL to output resource, either an HTTP URL which accepts POSTs, or a URL with format `s3:bucketname/path/to/file`.
   * `output_options[s3_acl]`: For S3 outputs, one of `private` (default), `public-read`, `public-read-write` or `authenticated-read`.
   * `output_options[s3_storage_class]`: For S3, either `standard` (default) or `reduced_redundancy`.
-  * `notification_url`: Optional notification URL. Progress will be reported using POSTs.
+  * `thumbnail_url`: URL to output resource, either an HTTP URL which accepts POSTs, or a URL with format `s3:bucketname/path/to/file`.
+  * `thumbnail_options[s3_acl]`: Same as for `output_options`.
+  * `thumbnail_options[s3_storage_class]`: Same as for `output_options`.
+  * `thumbnail_options[width]`: Desired width of thumbnail, defaults to output width.
+  * `thumbnail_options[height]`: Desired height of thumbnail, defaults to output height.
+  * `thumbnail_options[at_seconds]`: Desired point (in seconds) at which the thumbnail frame should be captured. Defaults to 50% into stream.
+  * `thumbnail_options[at_fraction]`: Desired point (in percentage) at which the thumbnail frame should be captured. Defaults to 50% into stream.
   * `transcoding_options[audio_sample_rate]`: Audio sample rate, in herz.
   * `transcoding_options[audio_bitrate]`: Audio bitrate, in bits per second.
   * `transcoding_options[audio_codec]`: Audio codec name, eg. `mp4`.
@@ -61,6 +67,7 @@ The web service is a small Sinatra app that supports job control methods. Curren
   * `transcoding_options[height]`: desired video frame height in pixels.
   * `transcoding_options[format]`: File format.
   * `transcoding_options[content_type]`: Content type of resultant file. Tranz will not be able to guess this at the moment.
+  * `notification_url`: Optional notification URL. Progress will be reported using POSTs.
 
 Current limitations
 -------------------

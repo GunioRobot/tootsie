@@ -9,6 +9,8 @@ module Tranz
       @input_url = attributes[:input_url]
       @output_url = attributes[:output_url]
       @output_options = (attributes[:output_options] || {}).with_indifferent_access
+      @thumbnail_url = attributes[:thumbnail_url]
+      @thumbnail_options = (attributes[:thumbnail_options] || {}).with_indifferent_access
       @notification_url = attributes[:notification_url]
       @transcoding_options = (attributes[:transcoding_options] || {}).with_indifferent_access
       @retries_left = attributes[:retries_left] || 5
@@ -25,6 +27,8 @@ module Tranz
         :input_url => @input_url,
         :output_url => @output_url,
         :output_options => @output_options,
+        :thumbnail_url => @thumbnail_url,
+        :thumbnail_options => @thumbnail_options,
         :notification_url => @notification_url,
         :transcoding_options => @transcoding_options,
         :retries_left => @retries_left,
@@ -48,6 +52,8 @@ module Tranz
     attr_accessor :output_options
     attr_accessor :notification_url
     attr_accessor :transcoding_options
+    attr_accessor :thumbnail_url
+    attr_accessor :thumbnail_options
     attr_accessor :retries_left
     attr_accessor :created_at
     attr_accessor :access_key
