@@ -25,14 +25,27 @@ module Tranz
       if options[:audio_codec].to_s == 'none'
         arguments['an'] = true
       else
-        arguments['acodec'] = options[:audio_codec] if options[:audio_codec]
+        case options[:audio_codec].try(:to_s)
+          when 'aac'
+            arguments['acodec'] = 'libfaac'
+          when String
+            arguments['acodec'] = options[:audio_codec]
+        end
         arguments['ar'] = options[:audio_sample_rate] if options[:audio_sample_rate]
         arguments['ab'] = options[:audio_bitrate] if options[:audio_bitrate]
       end
       if options[:video_codec].to_s == 'none'
         arguments['vn'] = true
       else
-        arguments['vcodec'] = options[:video_codec] if options[:video_codec]
+        case options[:video_codec].try(:to_s)
+          when 'h264'
+            arguments['vcodec'] = 'libx264'
+            arguments['vpre'] = ['medium', 'main']  # TODO: Allow override
+            arguments['crf'] = 15                   # TODO: Allow override
+            arguments['threads'] = 0
+          when String
+            arguments['vcodec'] = options[:video_codec]
+        end
         arguments['b'] = options[:video_bitrate] if options[:video_bitrate]
         arguments['r'] = options[:video_frame_rate] if options[:video_frame_rate]
         arguments['s'] = "#{options[:width]}x#{options[:height]}" if options[:width] or options[:height]
@@ -103,7 +116,14 @@ module Tranz
         command_line = @ffmpeg_binary.dup
         command_line << " -i '#{input_filename}' "
         command_line << arguments.map { |k, v|
-          (v.is_a?(TrueClass) or v.is_a?(FalseClass)) ? "-#{k}" : "-#{k} '#{v}'"
+          case v
+            when TrueClass, FalseClass
+              "-#{k}"
+            when Array
+              v.map { |w| "-#{k} '#{w}'" }.join(' ')
+            else
+              "-#{k} '#{v}'"
+          end
         }.join(' ')
         command_line << ' '
         command_line << "'#{output_filename}' 2>&1"
