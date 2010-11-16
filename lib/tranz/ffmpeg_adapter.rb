@@ -73,13 +73,17 @@ module Tranz
         at_seconds = thumbnail_options[:at_seconds].try(:to_f)
         at_seconds ||= (expected_duration || 0) * (thumbnail_options[:at_fraction].try(:to_f) || 0.5)
         @logger.info("Getting thumbnail frame (#{thumb_width}x#{thumb_height}) with FFmpeg at #{at_seconds} seconds")
-        run_ffmpeg(input_filename, thumbnail_options[:filename], @ffmpeg_arguments.merge(
-          :ss => at_seconds,
-          :vcodec => :mjpeg,
-          :vframes => 1,
-          :an => true,
-          :f => :rawvideo,
-          :s => "#{thumb_width}x#{thumb_height}"))
+        begin
+          run_ffmpeg(input_filename, thumbnail_options[:filename], @ffmpeg_arguments.merge(
+            :ss => at_seconds,
+            :vcodec => :mjpeg,
+            :vframes => 1,
+            :an => true,
+            :f => :rawvideo,
+            :s => "#{thumb_width}x#{thumb_height}"))
+        rescue FfmpegAdapterExecutionFailed => e
+          @logger.error("Thumbnail rendering failed, ignoring: #{e}")
+        end
       end
     end
     
