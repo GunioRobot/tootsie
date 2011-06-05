@@ -12,27 +12,27 @@ module Tranz
       @temp_file = Tempfile.new('tranz')
       @temp_file.close
       @file_name = @temp_file.path
+      @logger = Application.get.logger
     end
     
     # Put data into the output. Options:
     #
     # * +:content_type+ - content type of the stored data.
-    # * +:s3_access+ - S3 access permissions, one of +private+ (default), +public-read+,
-    #     +public-read-write+ or +authenticated-read+.
-    # * +:s3_storage_class+ - S3 storage class, either +:reduced_redundancy+ or +:standard+ (default).
     #
     def put!(options = {})
+      @logger.info("Storing #{@url}")
       case @url
-        when /^s3:([^\/]+)\/+(.+)$/
-          bucket_name, path = $1, $2
+        when /^s3:.*/
+          s3_options = S3.parse_uri(@url)
+          bucket_name, path = s3_options[:bucket], s3_options[:key]
           File.open(@temp_file.path, 'r') do |file|
             s3_service = Tranz::Application.get.s3_service
             begin
-              bucket = s3_service.buckets.find(bucket_name)
-              object = bucket.objects.build(path)
-              object.acl = options[:s3_acl] || :private
-              object.content_type = @content_type if @content_type
-              object.storage_class = options[:s3_storage_class] || :standard
+              object = s3_service.buckets.find(bucket_name).objects.build(path)
+              object.acl = s3_options[:acl] || :private
+              object.content_type = s3_options[:content_type]
+              object.content_type ||= @content_type if @content_type
+              object.storage_class = s3_options[:storage_class] || :standard
               object.content = file
               object.save
               @result_url = object.url

@@ -26,16 +26,17 @@ module Tranz
           raise SqsQueueCouldNotFindQueueError
         end
       end
+      @backoff = 0.5
     end
     
     def count
       @queue.attributes['ApproximateNumberOfMessages'].to_i
     end
     
-    def push(job)
+    def push(item)
       retries_left = 5
       begin
-        return @queue.create_message(job.to_json)
+        return @queue.create_message(item.to_json)
       rescue SystemExit, Interrupt
         raise
       rescue Exception => exception
@@ -52,7 +53,7 @@ module Tranz
     end
     
     def pop(options = {})
-      job = nil
+      item = nil
       loop do
         begin
           message = @queue.message(5)
@@ -65,14 +66,21 @@ module Tranz
           retry
         end
         if message
-          job = Job.new(JSON.parse(message.body))
-          message.destroy
+          begin
+            item = JSON.parse(message.body)
+          ensure
+            # Always destroy, even if parsing fails
+            message.destroy
+          end
+          @backoff /= 2.0
           break
+        else
+          @backoff = [@backoff * 0.2, 2.0].min
         end
         break unless options[:wait]
-        sleep(1.0)
+        sleep(@backoff)
       end
-      job
+      item
     end
     
   end

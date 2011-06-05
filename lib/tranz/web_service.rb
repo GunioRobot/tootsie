@@ -11,12 +11,13 @@ module Tranz
     end
     
     post '/job' do
-      logger.info "Handling job: #{params.inspect}"
-      job = Job.new(params)
+      job_data = JSON.parse(request.env["rack.input"].read)
+      logger.info "Handling job: #{job_data.inspect}"
+      job = Tasks::JobTask.new(job_data)
       unless job.valid?
         halt 400, 'Invalid job specification'
       end
-      Application.get.queue.push(job)
+      Application.get.task_manager.schedule(job)
       201
     end
     

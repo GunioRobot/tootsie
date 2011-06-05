@@ -2,7 +2,9 @@ require 's3'
 require 'sqs'
 
 module Tranz
-  
+
+  class CommandExecutionFailed < Exception; end
+    
   class Application
     
     def initialize(options = {})
@@ -15,7 +17,7 @@ module Tranz
     def configure!
       @configuration.load_from_file(File.join(Dir.pwd, "config/#{@environment}.yml"))
       @queue = Tranz::SqsQueue.new(@configuration.sqs_queue_name, sqs_service)
-      @processor = JobProcessor.new(@queue)
+      @task_manager = TaskManager.new(@queue)
       @web_service = WebService.new
     end
     
@@ -38,6 +40,45 @@ module Tranz
         :handler => @configuration.web_service_handler)
     end
     
+    def run_command(command_line, options = {}, &block)
+      options = options.with_indifferent_access
+      command_line.gsub!(/(^|\s):(\w+)/) do
+        pre, key, all = $1, $2, $~[0]
+        if options.include?(key)
+          value = options[key]
+          value = "'#{value}'" if value =~ /\s/
+          "#{pre}#{value}"
+        else
+          all
+        end
+      end
+      command_line = "#{command_line} 2>&1"
+      @logger.info("Running command: #{command_line}")
+      IO.popen(command_line, 'r') do |output|
+        output.each_line do |line|
+          @logger.info("[Command output] #{line.strip}")
+          yield line if block_given?
+        end
+      end
+      status = $?
+      if status.exited?
+        if status.exitstatus != 0
+          if options[:ignore_exit_code]
+            false
+          else
+            raise CommandExecutionFailed, "Command failed with exit code #{status.exitstatus}: #{command_line}"
+          end
+        end
+      elsif status.stopped?
+        raise CommandExecutionFailed, "Command stopped unexpectedly with signal #{status.stopsig}: #{command_line}"
+      elsif status.signaled?
+        raise CommandExecutionFailed, "Command died unexpectedly by signal #{status.termsig}: #{command_line}"
+      else
+        raise CommandExecutionFailed, "Command died unexpectedly: #{command_line}"
+      end
+      true
+    end
+    
     class << self
       def get
         @@instance
@@ -47,7 +88,7 @@ module Tranz
     attr_accessor :environment
     
     attr_reader :configuration
-    attr_reader :processor
+    attr_reader :task_manager
     attr_reader :web_service
     attr_reader :queue
     attr_reader :logger
