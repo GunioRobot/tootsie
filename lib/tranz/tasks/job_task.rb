@@ -7,7 +7,7 @@ module Tranz
       
       PROGRESS_NOTIFICATION_INTERVAL = 10.seconds
     
-      VALID_TYPES = %w(video audio).freeze
+      VALID_TYPES = %w(video audio image).freeze
     
       def initialize(attributes = {})
         attributes = attributes.with_indifferent_access
