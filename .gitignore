@@ -4,3 +4,6 @@
 /log
 /tmp
 /trash
+/config/development.yml
+/config/production.yml
+.rvmrc
