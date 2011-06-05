@@ -13,12 +13,15 @@ module Tranz
       @temp_file = Tempfile.new('tranz')
       @temp_file.close
       @file_name = @temp_file.path
+      @logger = Application.get.logger
     end
 
     def get!
+      @logger.info("Fetching #{@url} as #{@temp_file.path}")
       case @url
-        when /^s3:([^\/]+)\/+(.+)$/
-          bucket_name, path = $1, $2
+        when /^s3:.*$/
+          s3_options = S3.parse_uri(@url)
+          bucket_name, path = s3_options[:bucket], s3_options[:key]
           s3_service = Tranz::Application.get.s3_service
           begin
             File.open(@temp_file.path, 'wb') do |f|

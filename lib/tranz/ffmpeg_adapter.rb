@@ -1,8 +1,5 @@
 module Tranz
 
-  class FfmpegAdapterException < Exception; end
-  class FfmpegAdapterExecutionFailed < FfmpegAdapterException; end
-  
   class FfmpegAdapter
     
     def initialize(options = {})
@@ -126,26 +123,8 @@ module Tranz
           end
         }.join(' ')
         command_line << ' '
-        command_line << "'#{output_filename}' 2>&1"
-        @logger.info("Starting FFmpeg with command line: #{command_line}")
-        @output = ''
-        IO.popen(command_line, 'r') do |output|
-          output.each_line do |line|
-            @output << line
-            @logger.info("[ffmpeg] #{line.strip}")
-            yield line if block
-          end
-        end
-        status = $?
-        if status.exited?       
-          raise FfmpegAdapterExecutionFailed, "FFmpeg failed with exit code #{status.exitstatus}" if status.exitstatus != 0
-        elsif status.stopped?
-          raise FfmpegAdapterExecutionFailed, "FFmpeg stopped unexpectedly with signal #{status.stopsig}"
-        elsif status.signaled?
-          raise FfmpegAdapterExecutionFailed, "FFmpeg died unexpectedly by signal #{status.termsig}"
-        else
-          raise FfmpegAdapterExecutionFailed, "FFmpeg died unexpectedly"
-        end
+        command_line << "'#{output_filename}'"
+        Application.get.run_command(command_line, &block)
       end
 
   end

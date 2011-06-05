@@ -29,11 +29,11 @@ end
 
 controller = Tranz::Daemon.new(
   :root => File.join(File.dirname(__FILE__), "/.."),
-  :pid_file => File.join(File.dirname(__FILE__), "/../tmp/job_processor.pid"),
-  :log_file => File.join(File.dirname(__FILE__), "/../log/job_processor.log"))
+  :pid_file => File.join(File.dirname(__FILE__), "/../tmp/task_manager.pid"),
+  :log_file => File.join(File.dirname(__FILE__), "/../log/task_manager.log"))
 controller.on_spawn do
   app = Tranz::Application.new(:environment => environment, :logger => controller.logger)
   app.configure!
-  app.processor.run!
+  app.task_manager.run!
 end
 controller.control(ARGV)

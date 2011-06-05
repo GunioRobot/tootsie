@@ -4,7 +4,7 @@ require 'fileutils'
 
 module Tranz
 
-  # A simple, naive job queue implementation that stores items as JSON files 
+  # A simple, naive queue implementation that stores items as JSON files 
   # in the file system.
   class FileSystemQueue
     
@@ -17,9 +17,9 @@ module Tranz
       Dir.glob(File.join(@directory, "*.json")).length
     end
     
-    def push(job)
+    def push(item)
       Tempfile.open('tranz') do |tempfile|
-        tempfile << job.to_json
+        tempfile << item.to_json
         tempfile.close
         FileUtils.mv(tempfile.path, File.join(@directory, "#{Time.now.to_f}.json"))
       end
@@ -30,9 +30,9 @@ module Tranz
         lock do
           file_name = Dir.glob(File.join(@directory, "*.json")).sort.first
           if file_name
-            job_data = JSON.parse(File.read(file_name))
+            item = JSON.parse(File.read(file_name))
             FileUtils.rm(file_name)
-            return Job.new(job_data)
+            return item
           end
         end
         if options[:wait]
