@@ -71,13 +71,19 @@ module Tranz
         notification_url = @notification_url
         if notification_url
           message = message.merge(:signature => Client.generate_signature(@access_key)) if @access_key
-          message = message.stringify_keys          
+          message_json = message.stringify_keys.to_json
           if @use_tasks_for_notifications
             Application.get.task_manager.schedule(
-              Tasks::NotifyTask.new(:url => notification_url, :message => message))
+              Tasks::NotifyTask.new(:url => notification_url, :message => message_json))
           else
-            @logger.info "Notifying #{notification_url} with message: #{message}"
-            HTTPClient.new.post(notification_url, message)
+            # TODO: Retry on failure
+            @logger.info "Notifying #{notification_url} with message: #{message_json}"
+            begin
+              HTTPClient.new.post(notification_url, message_json,
+                'Content-Type' => 'application/json; charset=utf-8')
+            rescue Exception => exception
+              @logger.error "Notification failed with exception, ignoring it: #{exception.message}"
+            end
           end
         end
       end
