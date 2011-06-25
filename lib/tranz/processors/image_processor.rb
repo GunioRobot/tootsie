@@ -34,19 +34,22 @@ module Tranz
               
               output = Output.new(version_options[:target_url])
               begin
-                metadata = {}
-                Application.get.run_command('exiv2 -pt :file', :file => input.file_name, :ignore_exit_code => true) do |line|
-                  parse_exiv2_line(line, metadata)
+                result[:metadata] ||= begin
+                  metadata = {}
+                  Application.get.run_command('exiv2 -pt :file', :file => input.file_name, :ignore_exit_code => true) do |line|
+                    parse_exiv2_line(line, metadata)
+                  end
+                  Application.get.run_command('exiv2 -pi :file', :file => input.file_name, :ignore_exit_code => true) do |line|
+                    parse_exiv2_line(line, metadata)
+                  end
+                  Application.get.run_command('exiv2 -px :file', :file => input.file_name, :ignore_exit_code => true) do |line|
+                    parse_exiv2_line(line, metadata)
+                  end
+                  metadata = Hash[*metadata.entries.map { |key, values|
+                    [key, values.length > 1 ? values : values.first]
+                  }.flatten]
+                  metadata
                 end
-                Application.get.run_command('exiv2 -pi :file', :file => input.file_name, :ignore_exit_code => true) do |line|
-                  parse_exiv2_line(line, metadata)
-                end
-                Application.get.run_command('exiv2 -px :file', :file => input.file_name, :ignore_exit_code => true) do |line|
-                  parse_exiv2_line(line, metadata)
-                end
-                metadata = Hash[*metadata.entries.map { |key, values|
-                  [key, values.length > 1 ? values : values.first]
-                }.flatten]
                 
                 original_width, original_height = nil, nil
                 Application.get.run_command("identify -format '%w %h' :file", :file => input.file_name) do |line|
@@ -59,8 +62,6 @@ module Tranz
                 end
                 original_aspect = original_height / original_width.to_f
                 
-                method = (version_options[:method] || 'scale').to_sym
-                
                 new_width, new_height = version_options[:width], version_options[:height]
                 if new_width
                   new_height ||= (new_width * original_aspect).ceil
@@ -71,10 +72,11 @@ module Tranz
                 end
 
                 scale_width, scale_height = new_width, new_height
-                case (version_options[:scale_fitting] || 'absolute').to_sym
-                  when :absolute
+                scale = (version_options[:scale] || 'down').to_sym
+                case scale
+                  when :up, :none
                     # Do nothing
-                  when :within
+                  when :down
                     if scale_width > original_width
                       scale_width = original_width
                       scale_height = (scale_width * original_aspect).ceil
@@ -100,11 +102,11 @@ module Tranz
                   else
                     convert_options[:output_file] = output.file_name
                 end
-                if method == :scale or method == :scale_and_crop
+                if scale != :none
                   convert_command << " -resize :resize"
                   convert_options[:resize] = "#{scale_width}x#{scale_height}"
                 end
-                if method == :crop or method == :scale_and_crop
+                if version_options[:crop]
                   convert_command << " -gravity center -crop :crop"
                   convert_options[:crop] = "#{new_width}x#{new_height}+0+0"
                 end
@@ -135,7 +137,7 @@ module Tranz
                   when 'gif' then 'image/gif'
                 end
                 output.put!
-                result[:outputs] << {:url => output.result_url, :metadata => metadata}
+                result[:outputs] << {:url => output.result_url}
               ensure
                 output.close
               end

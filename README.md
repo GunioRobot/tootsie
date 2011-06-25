@@ -1,14 +1,14 @@
 Tranz
 =====
 
-Tranz is a simple audio/video/image transcoding/modification application written in Ruby. It can transcode audio, video and images between different formats, and also perform basic manipulations such as rescaling or quality reduction.
+Tranz is a simple audio/video/image transcoding/modification application written in Ruby. It can transcode audio, video and images between different formats, and also perform basic manipulations such as scaling.
 
 Tranz has the following external dependencies:
 
 * FFmpeg for transcoding of video and audio.
 * ImageMagick/GraphicsMagick for image conversion.
 * Amazon S3 for loading and storage of files (optional).
-* Amazon Simple Queue Service for internal job queue management.
+* Amazon Simple Queue Service for internal job queue management (optional).
 
 Overview
 --------
@@ -38,17 +38,13 @@ Supported outputs:
 * HTTP resource. The encoded file will be `POST`ed to a URL.
 * Amazon S3 bucket resource. Tranz will need write permissions to any S3 buckets.
 
-Notifications
--------------
+Each job may have multiple outputs given a single input. Designwise, the reason for doing this -- as opposed to requiring that the client submit multiple jobs, one for each output -- is twofold:
 
-If a notification URL is provided, events will be sent to it using `POST` requests. These are 'fire and forget' and will currently not be retried on failure, and the response status code is ignored.
+1. It allows the job to cache the input data locally for the duration of the job, rather than fetching it multiple times. One could suppose that multiple jobs could share the same cached input, but this would be awkward in a distributed setting where each node has its own file system; in such a case, a shared storage mechanism (file system, database or similar) would be needed.
 
-There are several types of events, indicated by the `event` parameter:
+2. It allows the client to be informed when *all* transcoded versions are available, something which may drastically simplify client logic. For example, a web application submitting a job to produce multiple scaled versions of an image may only start showing these images when all versions have been produced. To know whether all versions have been produced, it needs to maintain state somewhere about the progress. Having a single job produce all versions means this state can be reduced to a single boolean value.
 
-* `started`: The job was started.
-* `complete`: The job was complete. The parameter `url` will specify the completed file, and the parameter `time_taken` will count the number of seconds that the job took to complete.
-* `failed`: The job failed. The parameter `reason` will contain a textual explanation for the failure.
-* `failed_will_retry`: The job failed, but is being rescheduled for retrying. The parameter `reason` will contain a textual explanation for the failure.
+When using multiple outputs per job one should keep in mind that this reduces job throughput, requiring more concurrent job workers to be deployed.
 
 FFmpeg and ImageMagick are invoked for each job to perform the transcoding. These are abstracted behind set of generic options specifying format, codecs, bit rate and so on.
 
@@ -69,13 +65,17 @@ The job must be posted as an JSON hash with the content type `application/json`.
 
 Job-specific parameters are provided in the key `params`.
 
-Each job may have multiple outputs given a single input. Designwise, the reason for doing this -- as opposed to requiring that the client submit multiple jobs, one for each output -- is twofold:
+Notifications
+-------------
 
-1. It allows the job to cache the input data locally for the duration of the job, instead of fetch it multiple times. One could suppose that multiple jobs could share the same cached input, but this would be awkward in a distributed setting where each node has its own file system; in such a case, a local, shared storage mechanism (file system, database) would be needed.
+If a notification URL is provided, events will be sent to it using `POST` requests as JSON data. These are 'fire and forget' and will currently not be retried on failure, and the response status code is ignored.
 
-2. It allows the client to be informed when *all* transcoded versions are available, something which may drastically simplify client logic. For example, a web application submitting a job to produce multiple scaled versions of an image may only start showing these images when all versions have been produced. To know if all versions have been produced, it needs to maintain state somewhere about the progress. Having a single job produce all versions means this state can be reduced to a single boolean value.
+There are several types of events, indicated by the `event` key:
 
-When using multiple outputs per job one should keep in mind that this reduces job throughput, requiring more concurrent job workers to be deployed.
+* `started`: The job was started.
+* `complete`: The job was complete. The key `time_taken` will contain the time taken for the job, in seconds. Additional data will be provided that are specific to the type of job.
+* `failed`: The job failed. The key `reason` will contain a textual explanation for the failure.
+* `failed_will_retry`: The job failed, but is being rescheduled for retrying. The key `reason` will contain a textual explanation for the failure.
 
 Video transcoding jobs
 ----------------------
@@ -103,6 +103,12 @@ Video jobs have the `type` key set to either `video`, `audio`. Currently, `audio
   * `format`: File format.
   * `content_type`: Content type of resultant file. Tranz will not be able to guess this at the moment.
 
+Completion notification provides the following data:
+
+* `outputs` contains an array of results. Each is a hash with the following keys:
+  * `url`: the completed file.
+  * `metadata`: image metadata as a hash. These are raw EXIF and IPTC data from ImageMagick.
+
 Image transcoding jobs
 ----------------------
 
@@ -113,20 +119,24 @@ Video jobs have the `type` key set to `image`. The key `params` must be set to a
   * `target_url`: URL to output resource, either an HTTP URL which accepts POSTs, or an S3 URL.
   * `width`: Optional desired width of output image.
   * `height`: Optional desired height of output image.
-  * `method`: Either `scale` (default), `crop` or `scale_and_crop`. See below.
-  * `scale_fitting`: Either `within` (default), `fill` (the dimensions are chosen so the width and height are always met or exceeded) or `absolute`. See below.
+  * `scale`: One of the following values:
+    * `down` (default): The input image is scaled to fit within the dimensions `width` x `height`. If only `width` or only `height` is specified, then the other component will be computed from the aspect ratio of the input image.
+    * `up`: As `within`, but allow scaling to dimensions that are larger than the input image.
+    * `fit`: Similar to `within`, but the dimensions are chosen so the output width and height are always met or exceeded. In other words, if you pass in an image that is 100x50, specifying output dimensions as 100x100, then the output image will be 150x100.
+    * `none`: Don't scale at all.
+  * `crop`: If true, crop the image to the output dimensions.
   * `format`: Either `jpeg`, `png` or `gif`.
   * `quality`: A quality value between 0.0 and 1.0 which will be translated to a compression level depending on the output coding. The default is 1.0.
   * `strip_metadata`: If true, metadata such as EXIF and IPTC will be deleted. For thumbnails, this often reduces the file size considerably.
   * `content_type`: Content type of resultant file. The system will be able to guess basic types such as `image/jpeg`.
 
-Scaling and cropping is specified with `method`:
+Note that scaling always preserves the aspect ratio of the original image; in other words, if the original is 100 x 200, then passing the dimensions 100x100 will produce an image that is 50x100.
 
-* `scale`: The input image is scaled to fit within the dimensions `width` x `height`. If only `width` or only `height` is specified, then the other component will be computed from the aspect ratio of the input image. The aspect ratio is always preserved; in other words, if the original is 100x200, then passing the dimensions 100x100 will produce an image that is 50x100.
-* `crop`: The input image is cropped to the dimensions `width` x `height`. If only `width` or only `height` is specified, then the other component will be computed from the aspect ratio of the input image. Cropping always center-gravity.
-* `scale_and_crop`: The input is scaled, as above, and then cropped, as above. Should normally be combined with a `scale_fitting` value of `fill` in order to provide images that are guaranteed to match the output dimensions.
+Completion notification provides the following data:
 
-Normally, scaling will scale down the image to fit within the specified boundaries, but never scale it up, since this reduces resolution. If `scale_fitting` is set to `absolute`, however, the image will always be scaled to match the boundaries.
+* `outputs` contains an array of results. Each is a hash with the following keys:
+  * `url`: URL for the completed file.
+* `metadata`: image metadata as a hash. These are raw EXIF and IPTC data from ImageMagick.
 
 Note about S3 URLs
 ------------------
@@ -191,7 +201,7 @@ Jobs may now be posted to the web service API. For example:
       'params': {
         'input_url': 'http://example.com/test.3gp',
         'outputs': {
-          'target_url': 's3:mybucket/test.mp4#acl=public_read',
+          'target_url': 's3:mybucket/test.mp4?acl=public_read',
           'audio_sample_rate': 44100,
           'audio_bitrate': 64000,
           'format': 'flv',
@@ -204,23 +214,12 @@ Jobs may now be posted to the web service API. For example:
 License
 =======
 
-Copyright (c) 2010, 2011 Alexander Staubo
- 
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
- 
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
- 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+This software is licensed under the MIT License.
+
+Copyright © 2010, 2011 Alexander Staubo
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
