@@ -47,7 +47,7 @@ module Tranz
                   end
                   metadata = Hash[*metadata.entries.map { |key, values|
                     [key, values.length > 1 ? values : values.first]
-                  }.flatten]
+                  }.flatten(1)]
                   metadata
                 end
                 
