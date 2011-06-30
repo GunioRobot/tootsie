@@ -5,7 +5,7 @@ GEM
     builder (2.1.2)
     daemons (1.1.0)
     eventmachine (0.12.10)
-    httpclient (2.1.5.2)
+    httpclient (2.2.1)
     json (1.4.6)
     mime-types (1.16)
     proxies (0.2.1)
@@ -27,7 +27,7 @@ PLATFORMS
 DEPENDENCIES
   activesupport
   builder
-  httpclient
+  httpclient (~> 2.2.1)
   json
   mime-types
   s3
