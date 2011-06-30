@@ -4,7 +4,7 @@ module Tranz
     
     class << self
       def parse_uri(url)
-        if url =~ /^s3:([^\/]+)\/+(.+)(?:\?(.*))?$/
+        if url =~ /^s3:([^\/]+)\/+(.+?)(?:\?(.*))?$/
           output = {}.with_indifferent_access
           output[:bucket], output[:key], option_string = $1, $2, $3
           unless option_string.blank?
