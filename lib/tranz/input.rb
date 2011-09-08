@@ -19,6 +19,9 @@ module Tranz
     def get!
       @logger.info("Fetching #{@url} as #{@temp_file.path}")
       case @url
+        when /^file:(.*)/
+          @file_name = $1
+          raise InputNotFound, @url unless File.exist?(@file_name)
         when /^s3:.*$/
           s3_options = S3.parse_uri(@url)
           bucket_name, path = s3_options[:bucket], s3_options[:key]

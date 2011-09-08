@@ -119,9 +119,9 @@ Image transcoding jobs
 
 Video jobs have the `type` key set to `image`. The key `params` must be set to a hash with these keys:
 
-* `input_url`: URL to input file, either an HTTP URL or an S3 URL (see below).
+* `input_url`: URL to input file, either an HTTP URL, `file:/path` URL or an S3 URL (see below).
 * `versions`: Either a hash or an array of such hashes, each with the following keys:
-  * `target_url`: URL to output resource, either an HTTP URL which accepts POSTs, or an S3 URL.
+  * `target_url`: URL to output resource, either an HTTP URL, `file:/path` URL which accepts POSTs, or an S3 URL.
   * `width`: Optional desired width of output image.
   * `height`: Optional desired height of output image.
   * `scale`: One of the following values:
