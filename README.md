@@ -196,6 +196,16 @@ Installation
 Running
 =======
 
+Create a configuration under `config`, eg. `config/development.yml`:
+
+    --- 
+      aws_access_key_id: <your Amazon key>
+      aws_secret_access_key: <your Amazon secret>
+      web_service_host: localhost
+      web_service_port: 9000
+      web_service_handler: thin
+      sqs_queue_name: tranz
+
 Start the job manager with `bin/job_manager start`.
 
 Start the web service with `bin/web_service start`.
