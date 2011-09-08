@@ -65,6 +65,11 @@ The job must be posted as an JSON hash with the content type `application/json`.
 
 Job-specific parameters are provided in the key `params`.
 
+Access key
+----------
+
+(This part has not been written yet. Nor implemented, actually.)
+
 Notifications
 -------------
 
