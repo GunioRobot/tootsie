@@ -51,16 +51,20 @@ module Tranz
                   metadata
                 end
                 
-                original_width, original_height = nil, nil
-                Application.get.run_command("identify -format '%w %h' :file", :file => input.file_name) do |line|
-                  if line =~ /(\d+) (\d+)/
-                    original_width, original_height = $1.to_i, $2.to_i
+                original_depth, original_width, original_height = nil, nil
+                Application.get.run_command("identify -format '%z %w %h' :file", :file => input.file_name) do |line|
+                  if line =~ /(\d+) (\d+) (\d+)/
+                    original_depth, original_width, original_height = $~[1, 3].map(&:to_i)
                   end
                 end
                 unless original_width and original_height
                   raise "Unable to determine dimensions of input image"
                 end
                 original_aspect = original_height / original_width.to_f
+
+                result[:width] = original_width
+                result[:height] = original_height
+                result[:depth] = original_depth
                 
                 new_width, new_height = version_options[:width], version_options[:height]
                 if new_width

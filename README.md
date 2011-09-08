@@ -137,6 +137,9 @@ Completion notification provides the following data:
 * `outputs` contains an array of results. Each is a hash with the following keys:
   * `url`: URL for the completed file.
 * `metadata`: image metadata as a hash. These are raw EXIF and IPTC data from ImageMagick.
+* `width`: width, in pixels, of original image.
+* `height`: height, in pixels, of original image.
+* `depth`: depth, in bits, of original image.
 
 Note about S3 URLs
 ------------------
