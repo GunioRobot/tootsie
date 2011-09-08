@@ -36,13 +36,22 @@ module Tranz
               begin
                 result[:metadata] ||= begin
                   metadata = {}
-                  Application.get.run_command('exiv2 -pt :file', :file => input.file_name, :ignore_exit_code => true) do |line|
+                  Application.get.run_command('exiv2 -pt :file',
+                    :file => input.file_name,
+                    :output_encoding => 'iso-8859-1',  # Exiv doesn't specify, so assume the worst
+                    :ignore_exit_code => true) do |line|
                     parse_exiv2_line(line, metadata)
                   end
-                  Application.get.run_command('exiv2 -pi :file', :file => input.file_name, :ignore_exit_code => true) do |line|
+                  Application.get.run_command('exiv2 -pi :file',
+                    :file => input.file_name,
+                    :output_encoding => 'iso-8859-1',  # Exiv doesn't specify, so assume the worst
+                    :ignore_exit_code => true) do |line|
                     parse_exiv2_line(line, metadata)
                   end
-                  Application.get.run_command('exiv2 -px :file', :file => input.file_name, :ignore_exit_code => true) do |line|
+                  Application.get.run_command('exiv2 -px :file',
+                    :file => input.file_name,
+                    :output_encoding => 'iso-8859-1',  # Exiv doesn't specify, so assume the worst
+                    :ignore_exit_code => true) do |line|
                     parse_exiv2_line(line, metadata)
                   end
                   metadata = Hash[*metadata.entries.map { |key, values|
@@ -169,6 +178,8 @@ module Tranz
             end
             (hash[key] ||= []) << value
           end
+        rescue ArgumentError, Encoding::CompatibilityError
+          # Encoding errors, ignore
         end
     
     end

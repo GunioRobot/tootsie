@@ -54,7 +54,7 @@ module Tranz
       end
       command_line = "#{command_line} 2>&1"
       @logger.info("Running command: #{command_line}")
-      IO.popen(command_line, 'r') do |output|
+      IO.popen(command_line, "r:#{options[:output_encoding] || 'utf-8'}") do |output|
         output.each_line do |line|
           @logger.info("[Command output] #{line.strip}")
           yield line if block_given?
