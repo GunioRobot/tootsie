@@ -36,7 +36,7 @@ module Tranz
         when /http(s?):\/\//
           response = HTTPClient.new.get(@url)
           File.open(@temp_file.path, 'wb') do |f|
-            f << response.body.content
+            f << response.body
           end
         else
           raise ArgumentError, "Don't know to handle URL: #{@url}"
