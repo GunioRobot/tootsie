@@ -97,10 +97,10 @@ Video jobs have the `type` key set to either `video`, `audio`. Currently, `audio
     * `at_seconds`: Desired point (in seconds) at which the thumbnail frame should be captured. Defaults to 50% into stream.
     * `at_fraction`: Desired point (in percentage) at which the thumbnail frame should be captured. Defaults to 50% into stream.
     * `force_aspect_ratio`: If `true`, force aspect ratio; otherwise aspect is preserved when computing dimensions.
-  * `audio_sample_rate`: Audio sample rate, in herz.
+  * `audio_sample_rate`: Audio sample rate, in hertz.
   * `audio_bitrate`: Audio bitrate, in bits per second.
   * `audio_codec`: Audio codec name, eg. `mp4`.
-  * `video_frame_rate`: video frame rate, in herz.
+  * `video_frame_rate`: video frame rate, in hertz.
   * `video_bitrate`: video bitrate, in bits per second.
   * `video_codec`: video codec name, eg. `mp4`.
   * `width`: desired video frame width in pixels.
