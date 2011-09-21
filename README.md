@@ -181,11 +181,18 @@ Current limitations
 Requirements
 ============
 
-* Ruby 1.8.7 or later.
-* FFmpeg (for audio/video jobs, otherwise optional).
-* ImageMagick (for image jobs, otherwise optional).
-* Exiv2 (for image jobs, otherwise optional).
+* Ruby 1.9.1 or later.
 * Bundler.
+
+For video jobs:
+
+* FFmpeg
+
+For image jobs:
+
+* ImageMagick
+* Exiv2
+* pngcrush (optional)
 
 Installation
 ============
