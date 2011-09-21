@@ -1,3 +1,4 @@
+require 'iconv'
 require 'time'
 
 module Tootsie
@@ -47,7 +48,7 @@ module Tootsie
               else
                 begin
                   Iconv.iconv("utf-8", "utf-8", value)
-                rescue Exception => e
+                rescue Iconv::IllegalSequence, Iconv::InvalidCharacter
                   value = Iconv.iconv("utf-8", "iso-8859-1", value)[0]
                 else
                   value.force_encoding 'utf-8'
