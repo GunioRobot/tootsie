@@ -7,3 +7,5 @@
 /config/development.yml
 /config/production.yml
 .rvmrc
+*.sublime-project
+*.sublime-workspace
