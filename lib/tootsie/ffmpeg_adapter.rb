@@ -124,7 +124,7 @@ module Tootsie
         }.join(' ')
         command_line << ' '
         command_line << "'#{output_filename}'"
-        Application.get.run_command(command_line, &block)
+        CommandRunner.new(command_line).run(&block)
       end
 
   end

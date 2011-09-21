@@ -1,5 +1,3 @@
-require 'time'
-
 module Tootsie
   module Processors
   
@@ -34,34 +32,10 @@ module Tootsie
               
               output = Output.new(version_options[:target_url])
               begin
-                result[:metadata] ||= begin
-                  metadata = {}
-                  Application.get.run_command('exiv2 -pt :file',
-                    :file => input.file_name,
-                    :output_encoding => 'iso-8859-1',  # Exiv doesn't specify, so assume the worst
-                    :ignore_exit_code => true) do |line|
-                    parse_exiv2_line(line, metadata)
-                  end
-                  Application.get.run_command('exiv2 -pi :file',
-                    :file => input.file_name,
-                    :output_encoding => 'iso-8859-1',  # Exiv doesn't specify, so assume the worst
-                    :ignore_exit_code => true) do |line|
-                    parse_exiv2_line(line, metadata)
-                  end
-                  Application.get.run_command('exiv2 -px :file',
-                    :file => input.file_name,
-                    :output_encoding => 'iso-8859-1',  # Exiv doesn't specify, so assume the worst
-                    :ignore_exit_code => true) do |line|
-                    parse_exiv2_line(line, metadata)
-                  end
-                  metadata = Hash[*metadata.entries.map { |key, values|
-                    [key, values.length > 1 ? values : values.first]
-                  }.flatten(1)]
-                  metadata
-                end
+                result[:metadata] ||= ImageMetadataExtractor.new.extract(input.file_name)
                 
                 original_depth, original_width, original_height = nil, nil
-                Application.get.run_command("identify -format '%z %w %h' :file", :file => input.file_name) do |line|
+                CommandRunner.new("identify -format '%z %w %h' :file").run(:file => input.file_name) do |line|
                   if line =~ /(\d+) (\d+) (\d+)/
                     original_depth, original_width, original_height = $~[1, 3].map(&:to_i)
                   end
@@ -131,14 +105,14 @@ module Tootsie
                 convert_command << " -quality #{((version_options[:quality] || 1.0) * 100).ceil}%"
                 
                 convert_command << " :input_file :output_file"
-                Application.get.run_command(convert_command, convert_options)
+                CommandRunner.new(convert_command).run(convert_options)
                 
                 if version_options[:format] == 'png'
                   Tempfile.open('tootsie') do |file|
                     # TODO: Make less sloppy
                     file.write(File.read(output.file_name))
                     file.close
-                    Application.get.run_command('pngcrush :input_file :output_file',
+                    CommandRunner.new('pngcrush :input_file :output_file').run(
                       :input_file => file.path, :output_file => output.file_name)
                   end
                 end
@@ -164,24 +138,7 @@ module Tootsie
     
       attr_accessor :input_url
       attr_accessor :versions
-      
-      private
-      
-        def parse_exiv2_line(line, hash)
-          if line =~ /^([^\s]+)\s+([^\s]+)\s+\d+  (.*)$/
-            key, type, value = $1, $2, $3
-            case type
-              when 'Short', 'Long'
-                value = value.to_i
-              when 'Date'
-                value = Time.parse(value)
-            end
-            (hash[key] ||= []) << value
-          end
-        rescue ArgumentError, Encoding::CompatibilityError
-          # Encoding errors, ignore
-        end
-    
+
     end
 
   end  
