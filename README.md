@@ -184,6 +184,7 @@ Requirements
 * Ruby 1.8.7 or later.
 * FFmpeg (for audio/video jobs, otherwise optional).
 * ImageMagick (for image jobs, otherwise optional).
+* Exiv2 (for image jobs, otherwise optional).
 * Bundler.
 
 Installation
