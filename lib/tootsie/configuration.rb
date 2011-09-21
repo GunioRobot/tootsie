@@ -1,4 +1,4 @@
-module Tranz
+module Tootsie
   
   class Configuration
     
@@ -7,7 +7,7 @@ module Tranz
       @web_service_port = 9090
       @web_service_handler = 'thin'
       @ffmpeg_thread_count = 1
-      @sqs_queue_name = 'tranz'
+      @sqs_queue_name = 'tootsie'
     end
     
     def load_from_file(file_name)

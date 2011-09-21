@@ -5,7 +5,7 @@ require 'bundler'
 Bundler.setup
 
 $:.unshift(File.join(File.dirname(__FILE__), "/../lib"))
-require 'tranz'
+require 'tootsie'
 
 environment = :development
 
@@ -27,12 +27,12 @@ ARGV.options do |opts|
   end
 end
 
-controller = Tranz::Daemon.new(
+controller = Tootsie::Daemon.new(
   :root => File.join(File.dirname(__FILE__), "/.."),
   :pid_file => File.join(File.dirname(__FILE__), "/../tmp/task_manager.pid"),
   :log_file => File.join(File.dirname(__FILE__), "/../log/task_manager.log"))
 controller.on_spawn do
-  app = Tranz::Application.new(:environment => environment, :logger => controller.logger)
+  app = Tootsie::Application.new(:environment => environment, :logger => controller.logger)
   app.configure!
   app.task_manager.run!
 end

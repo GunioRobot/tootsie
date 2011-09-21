@@ -1,6 +1,6 @@
 require 'time'
 
-module Tranz
+module Tootsie
   module Processors
   
     class ImageProcessor
@@ -134,7 +134,7 @@ module Tranz
                 Application.get.run_command(convert_command, convert_options)
                 
                 if version_options[:format] == 'png'
-                  Tempfile.open('tranz') do |file|
+                  Tempfile.open('tootsie') do |file|
                     # TODO: Make less sloppy
                     file.write(File.read(output.file_name))
                     file.close

@@ -1,7 +1,7 @@
 require 's3'
 require 'sqs'
 
-module Tranz
+module Tootsie
 
   class CommandExecutionFailed < Exception; end
     
@@ -16,7 +16,7 @@ module Tranz
     
     def configure!
       @configuration.load_from_file(File.join(Dir.pwd, "config/#{@environment}.yml"))
-      @queue = Tranz::SqsQueue.new(@configuration.sqs_queue_name, sqs_service)
+      @queue = Tootsie::SqsQueue.new(@configuration.sqs_queue_name, sqs_service)
       @task_manager = TaskManager.new(@queue)
       @web_service = WebService.new
     end

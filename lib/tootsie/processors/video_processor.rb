@@ -1,6 +1,6 @@
 require 'json'
 
-module Tranz
+module Tootsie
   module Processors
   
     class VideoProcessor
@@ -45,7 +45,7 @@ module Tranz
                   adapter_options.delete(:target_url)
                   adapter_options[:thumbnail] = @thumbnail_options.merge(:filename => thumbnail_output.file_name) if thumbnail_output
 
-                  adapter = Tranz::FfmpegAdapter.new(:thread_count => @thread_count)
+                  adapter = Tootsie::FfmpegAdapter.new(:thread_count => @thread_count)
                   if block
                     adapter.progress = lambda { |seconds, total_seconds|
                       yield(:progress => (seconds + (total_seconds * version_index)) / (total_seconds * versions.length).to_f)

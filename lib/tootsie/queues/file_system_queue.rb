@@ -2,7 +2,7 @@ require 'json'
 require 'tempfile'
 require 'fileutils'
 
-module Tranz
+module Tootsie
 
   # A simple, naive queue implementation that stores items as JSON files 
   # in the file system.
@@ -18,7 +18,7 @@ module Tranz
     end
     
     def push(item)
-      Tempfile.open('tranz') do |tempfile|
+      Tempfile.open('tootsie') do |tempfile|
         tempfile << item.to_json
         tempfile.close
         FileUtils.mv(tempfile.path, File.join(@directory, "#{Time.now.to_f}.json"))

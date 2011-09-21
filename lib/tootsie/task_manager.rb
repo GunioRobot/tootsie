@@ -2,7 +2,7 @@ require 'httpclient'
 require 'uri'
 require 'benchmark'
 
-module Tranz
+module Tootsie
   
   class TaskManager
     

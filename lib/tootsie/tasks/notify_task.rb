@@ -1,4 +1,4 @@
-module Tranz
+module Tootsie
   module Tasks
     
     class NotifyTask

@@ -1,9 +1,9 @@
-Tranz
-=====
+Tootsie
+=======
 
-Tranz is a simple audio/video/image transcoding/modification application written in Ruby. It can transcode audio, video and images between different formats, and also perform basic manipulations such as scaling.
+Tootsie (formerly called Tranz) is a simple audio/video/image transcoding/modification application written in Ruby. It can transcode audio, video and images between different formats, and also perform basic manipulations such as scaling.
 
-Tranz has the following external dependencies:
+Tootsie has the following external dependencies:
 
 * FFmpeg for transcoding of video and audio.
 * ImageMagick/GraphicsMagick for image conversion.
@@ -13,7 +13,7 @@ Tranz has the following external dependencies:
 Overview
 --------
 
-Tranz is divided into multiple independent parts:
+Tootsie is divided into multiple independent parts:
 
 * Job manager: finds new transcoding jobs and executes them.
 * FFmpeg, ImageMagick: performs the actual transcoding.
@@ -31,12 +31,12 @@ The job manager pops jobs from a queue and processes them. Each job specifies an
 Supported inputs at the moment:
 
 * HTTP resource. Currently only public (non-authenticated) resources are supported.
-* Amazon S3 bucket resource. S3 buckets must have the appropriate ACLs so that Tranz can read the files; if the input file is not public, Tranz must be run with an AWS access key that is granted read access to the file.
+* Amazon S3 bucket resource. S3 buckets must have the appropriate ACLs so that Tootsie can read the files; if the input file is not public, Tootsie must be run with an AWS access key that is granted read access to the file.
 
 Supported outputs:
 
 * HTTP resource. The encoded file will be `POST`ed to a URL.
-* Amazon S3 bucket resource. Tranz will need write permissions to any S3 buckets.
+* Amazon S3 bucket resource. Tootsie will need write permissions to any S3 buckets.
 
 Each job may have multiple outputs given a single input. Designwise, the reason for doing this -- as opposed to requiring that the client submit multiple jobs, one for each output -- is twofold:
 
@@ -106,7 +106,7 @@ Video jobs have the `type` key set to either `video`, `audio`. Currently, `audio
   * `width`: desired video frame width in pixels.
   * `height`: desired video frame height in pixels.
   * `format`: File format.
-  * `content_type`: Content type of resultant file. Tranz will not be able to guess this at the moment.
+  * `content_type`: Content type of resultant file. Tootsie will not be able to guess this at the moment.
 
 Completion notification provides the following data:
 
@@ -189,9 +189,9 @@ Requirements
 Installation
 ============
 
-* Fetch Git repositroy: `git clone git@github.com:origo/tranz.git`.
+* Fetch Git repositroy: `git clone git@github.com:origo/tootsie.git`.
 * Install Bundler with `gem install bundler`.
-* Install dependencies with `cd tranz; bundle install`.
+* Install dependencies with `cd tootsie; bundle install`.
 
 Running
 =======
@@ -204,7 +204,7 @@ Create a configuration under `config`, eg. `config/development.yml`:
       web_service_host: localhost
       web_service_port: 9000
       web_service_handler: thin
-      sqs_queue_name: tranz
+      sqs_queue_name: tootsie
 
 Start the job manager with `bin/job_manager start`.
 

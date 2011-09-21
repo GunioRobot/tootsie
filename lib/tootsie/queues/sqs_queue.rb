@@ -2,7 +2,7 @@ require 'json'
 require 'sqs'
 require 'timeout'
 
-module Tranz
+module Tootsie
   
   class SqsQueueCouldNotFindQueueError < Exception; end
 

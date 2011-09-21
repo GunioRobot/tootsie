@@ -1,7 +1,7 @@
 require 'httpclient'
 require 's3'
 
-module Tranz
+module Tootsie
   
   class IncompatibleOutputError < Exception; end
   
@@ -9,7 +9,7 @@ module Tranz
     
     def initialize(url)
       @url = url
-      @temp_file = Tempfile.new('tranz')
+      @temp_file = Tempfile.new('tootsie')
       @temp_file.close
       @file_name = @temp_file.path
       @logger = Application.get.logger
@@ -28,7 +28,7 @@ module Tranz
           s3_options = S3.parse_uri(@url)
           bucket_name, path = s3_options[:bucket], s3_options[:key]
           File.open(@temp_file.path, 'r') do |file|
-            s3_service = Tranz::Application.get.s3_service
+            s3_service = Tootsie::Application.get.s3_service
             begin
               object = s3_service.buckets.find(bucket_name).objects.build(path)
               object.acl = s3_options[:acl] || :private

@@ -2,7 +2,7 @@ require "logger"
 require "fileutils"
 require 'optparse'
 
-module Tranz
+module Tootsie
 
   class DaemonError < Exception; end
   class DaemonAlreadyRunning < DaemonError; end

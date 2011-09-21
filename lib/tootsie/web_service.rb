@@ -1,6 +1,6 @@
 require 'sinatra/base'
 
-module Tranz
+module Tootsie
   
   class WebService < Sinatra::Base
     set :sessions, false
