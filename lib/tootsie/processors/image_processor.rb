@@ -32,7 +32,7 @@ module Tootsie
               
               output = Output.new(version_options[:target_url])
               begin
-                result[:metadata] ||= ImageMetadataExtractor.new.extract(input.file_name)
+                result[:metadata] ||= ImageMetadataExtractor.new.extract_from_file(input.file_name)
                 
                 original_depth, original_width, original_height = nil, nil
                 CommandRunner.new("identify -format '%z %w %h' :file").run(:file => input.file_name) do |line|
