@@ -1,0 +1,7 @@
+---
+  aws_access_key_id: <your_key>
+  aws_secret_access_key: <your_secret>
+  web_service_host: localhost
+  web_service_port: 9090
+  web_service_handler: thin
+  sqs_queue_name: tranz_<your_github_handle_or_something>
