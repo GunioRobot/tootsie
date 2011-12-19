@@ -3,12 +3,12 @@ require 'sqs'
 require 'timeout'
 
 module Tootsie
-  
+
   class SqsQueueCouldNotFindQueueError < Exception; end
 
   # A queue which uses Amazon's Simple Queue Service (SQS).
   class SqsQueue
-    
+
     def initialize(queue_name, sqs_service)
       @logger = Application.get.logger
       @sqs_service = sqs_service
@@ -28,11 +28,11 @@ module Tootsie
       end
       @backoff = 0.5
     end
-    
+
     def count
       @queue.attributes['ApproximateNumberOfMessages'].to_i
     end
-    
+
     def push(item)
       retries_left = 5
       begin
@@ -51,7 +51,7 @@ module Tootsie
         end
       end
     end
-    
+
     def pop(options = {})
       item = nil
       loop do
@@ -82,7 +82,7 @@ module Tootsie
       end
       item
     end
-    
+
   end
-  
+
 end

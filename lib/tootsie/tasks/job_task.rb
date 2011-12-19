@@ -1,14 +1,14 @@
 module Tootsie
   module Tasks
-    
+
     class JobTask
-    
+
       DEFAULT_MAX_RETRIES = 5
-      
+
       PROGRESS_NOTIFICATION_INTERVAL = 10.seconds
-    
+
       VALID_TYPES = %w(video audio image).freeze
-    
+
       def initialize(attributes = {})
         attributes = attributes.with_indifferent_access
         @type = attributes[:type].to_s
@@ -20,11 +20,11 @@ module Tootsie
         @logger = Application.get.logger
         @use_tasks_for_notifications = false  # TODO: Disabled for now, SQS does not preserve order
       end
-    
+
       def valid?
         return @type && VALID_TYPES.include?(@type)
       end
-    
+
       def execute!
         @logger.info("Begin processing job: #{attributes.inspect}")
         notify!(:event => :started)
@@ -65,7 +65,7 @@ module Tootsie
           @logger.info "Completed job #{attributes.inspect}"
         end
       end
-    
+
       # Notify the caller of this job with some message.
       def notify!(message)
         notification_url = @notification_url
@@ -87,7 +87,7 @@ module Tootsie
           end
         end
       end
-    
+
       def attributes
         return {
           :type => @type,
@@ -97,15 +97,15 @@ module Tootsie
           :params => @params
         }
       end
-    
+
       attr_accessor :retries_left
       attr_accessor :created_at
       attr_accessor :access_key
       attr_accessor :notification_url
       attr_accessor :params
       attr_accessor :type
-          
+
     end
 
-  end  
+  end
 end

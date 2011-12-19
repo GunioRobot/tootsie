@@ -1,25 +1,25 @@
 module Tootsie
   module Processors
-  
+
     class ImageProcessor
-    
+
       def initialize(params = {})
         @input_url = params[:input_url]
         @versions = [params[:versions] || {}].flatten
         @logger = Application.get.logger
       end
-    
+
       def valid?
         return @input_url && !@versions.blank?
       end
-    
+
       def params
         return {
           :input_url => @input_url,
           :versions => @versions
         }
       end
-    
+
       def execute!(&block)
         result = {:outputs => []}
         input, output = Input.new(@input_url), nil
@@ -29,11 +29,11 @@ module Tootsie
             versions.each_with_index do |version_options, version_index|
               version_options = version_options.with_indifferent_access
               @logger.info("Handling version: #{version_options.inspect}")
-              
+
               output = Output.new(version_options[:target_url])
               begin
                 result[:metadata] ||= ImageMetadataExtractor.new.extract_from_file(input.file_name)
-                
+
                 original_depth, original_width, original_height = nil, nil
                 CommandRunner.new("identify -format '%z %w %h' :file").run(:file => input.file_name) do |line|
                   if line =~ /(\d+) (\d+) (\d+)/
@@ -48,7 +48,7 @@ module Tootsie
                 result[:width] = original_width
                 result[:height] = original_height
                 result[:depth] = original_depth
-                
+
                 new_width, new_height = version_options[:width], version_options[:height]
                 if new_width
                   new_height ||= (new_width * original_aspect).ceil
@@ -80,7 +80,7 @@ module Tootsie
                       scale_height = (scale_width * original_aspect).ceil
                     end
                 end
-                
+
                 convert_command = "convert"
                 convert_options = {:input_file => input.file_name}
                 case version_options[:format]
@@ -103,10 +103,10 @@ module Tootsie
                 end
 
                 convert_command << " -quality #{((version_options[:quality] || 1.0) * 100).ceil}%"
-                
+
                 convert_command << " :input_file :output_file"
                 CommandRunner.new(convert_command).run(convert_options)
-                
+
                 if version_options[:format] == 'png'
                   Tempfile.open('tootsie') do |file|
                     # TODO: Make less sloppy
@@ -116,7 +116,7 @@ module Tootsie
                       :input_file => file.path, :output_file => output.file_name)
                   end
                 end
-                
+
                 output.content_type = version_options[:content_type] if version_options[:content_type]
                 output.content_type ||= case version_options[:format]
                   when 'jpeg' then 'image/jpeg'
@@ -135,11 +135,11 @@ module Tootsie
         end
         result
       end
-    
+
       attr_accessor :input_url
       attr_accessor :versions
 
     end
 
-  end  
+  end
 end

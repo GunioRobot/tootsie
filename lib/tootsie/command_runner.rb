@@ -53,6 +53,6 @@ module Tootsie
       end
       true
     end
-  
+
   end
 end

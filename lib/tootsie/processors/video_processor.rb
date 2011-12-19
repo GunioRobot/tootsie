@@ -2,20 +2,20 @@ require 'json'
 
 module Tootsie
   module Processors
-  
+
     class VideoProcessor
-    
+
       def initialize(params = {})
         @input_url = params[:input_url]
         @thumbnail_options = (params[:thumbnail] || {}).with_indifferent_access
         @versions = [params[:versions] || {}].flatten
         @thread_count = Application.get.configuration.ffmpeg_thread_count
       end
-    
+
       def valid?
         return @input_url && !@versions.blank?
       end
-    
+
       def params
         return {
           :input_url => @input_url,
@@ -23,7 +23,7 @@ module Tootsie
           :versions => @versions
         }
       end
-    
+
       def execute!(&block)
         result = {:urls => []}
         input, output, thumbnail_output = Input.new(@input_url), nil, nil
@@ -32,13 +32,13 @@ module Tootsie
           begin
             versions.each_with_index do |version_options, version_index|
               version_options = version_options.with_indifferent_access
-              
+
               if version_index == 0 and @thumbnail_options[:target_url]
                 thumbnail_output = Output.new(@thumbnail_options[:target_url])
               else
                 thumbnail_output = nil
               end
-              begin              
+              begin
                 output = Output.new(version_options[:target_url])
                 begin
                   adapter_options = version_options.dup
@@ -74,12 +74,12 @@ module Tootsie
         end
         result
       end
-    
+
       attr_accessor :input_url
       attr_accessor :versions
       attr_accessor :thumbnail_options
-    
+
     end
 
-  end  
+  end
 end

@@ -1,7 +1,7 @@
 module Tootsie
-  
+
   module S3
-    
+
     class << self
       def parse_uri(url)
         if url =~ /^s3:([^\/]+)\/+(.+?)(?:\?(.*))?$/
@@ -18,7 +18,7 @@ module Tootsie
         end
       end
     end
-    
+
   end
-  
+
 end

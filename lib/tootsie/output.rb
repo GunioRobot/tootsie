@@ -2,11 +2,11 @@ require 'httpclient'
 require 's3'
 
 module Tootsie
-  
+
   class IncompatibleOutputError < Exception; end
-  
+
   class Output
-    
+
     def initialize(url)
       @url = url
       @temp_file = Tempfile.new('tootsie')
@@ -14,7 +14,7 @@ module Tootsie
       @file_name = @temp_file.path
       @logger = Application.get.logger
     end
-    
+
     # Put data into the output. Options:
     #
     # * +:content_type+ - content type of the stored data.
@@ -52,16 +52,16 @@ module Tootsie
           raise IncompatibleOutputError, "Don't know to store output URL: #{@url}"
       end
     end
-    
+
     def close
       @temp_file.unlink
     end
-    
+
     attr_reader :url
     attr_reader :result_url
     attr_reader :file_name
     attr_accessor :content_type
-    
+
   end
 
 end

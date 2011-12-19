@@ -9,11 +9,11 @@ module Tootsie
   class DaemonNotRunning < DaemonError; end
   class DaemonTerminationFailed < DaemonError; end
   class DaemonNotConfigured < DaemonError; end
-  class DaemonStartFailed < DaemonError; end 
+  class DaemonStartFailed < DaemonError; end
 
   # Daemon controller class that encapsulates a running daemon and a remote interface to it.
   class Daemon
-  
+
     # Initializes the daemon controller.
     def initialize(options = {})
       @root = options[:root] || Dir.pwd
@@ -22,16 +22,16 @@ module Tootsie
       @on_spawn = nil
     end
 
-    # Specifies a block to execute to run the actual daemon. Each call overrides the previous one.  
+    # Specifies a block to execute to run the actual daemon. Each call overrides the previous one.
     def on_spawn(&block)
       @on_spawn = block
     end
 
-    # Specifies a block to execute to termiantion. Each call overrides the previous one.  
+    # Specifies a block to execute to termiantion. Each call overrides the previous one.
     def on_terminate(&block)
       @on_terminate = block
     end
-  
+
     # Control the daemon through command-line arguments.
     def control(args, title = nil)
       $stderr.sync = true
@@ -39,7 +39,7 @@ module Tootsie
       command = args.shift
       control_with_command(command, args, title)
     end
-  
+
     # Control the daemon through a specific command.
     def control_with_command(command, args, title = nil)
       case command
@@ -76,7 +76,7 @@ module Tootsie
         end
       end
     end
-  
+
     # Starts daemon.
     def start
       raise DaemonNotConfigured, "Daemon not configured" unless @on_spawn
@@ -90,7 +90,7 @@ module Tootsie
       File.delete(@pid_file) rescue nil
       child_pid = Process.fork
       if child_pid
-        sleep(1)      
+        sleep(1)
         unless running?
           pid = self.pid
           if pid == child_pid
@@ -98,7 +98,7 @@ module Tootsie
           else
             raise DaemonStartFailed, "Daemon failed to start for some unknown reason"
           end
-        end      
+        end
         return
       end
       @logger = nil
@@ -148,7 +148,7 @@ module Tootsie
         logger.close
       end
     end
-  
+
     # Stops daemon.
     def stop(options = {})
       stopped = false
@@ -205,7 +205,7 @@ module Tootsie
         raise DaemonNotRunning, "Process is not running"
       end
     end
-  
+
     # Restarts daemon.
     def restart
       if running?
@@ -217,12 +217,12 @@ module Tootsie
       end
       start
     end
-  
+
     # Is the daemon running?
     def running?
       !pid.nil?
     end
-  
+
     # Returns the daemon pid.
     def pid
       pid = nil
@@ -239,7 +239,7 @@ module Tootsie
       pid
     end
 
-    # Signals the daemon.  
+    # Signals the daemon.
     def signal(signal)
       pid = self.pid
       if pid
@@ -248,15 +248,15 @@ module Tootsie
         raise DaemonNotRunning, "Process is not running"
       end
     end
-  
+
     # Returns logger.
     def logger
       return @logger ||= Logger.new(@log_file || "/dev/null")
     end
-  
+
     attr_reader :root
     attr_reader :pid_file
-  
+
     private
 
       def pid_running?(pid)
@@ -267,7 +267,7 @@ module Tootsie
         end
         return true
       end
-        
+
       def handle_errors(&block)
         begin
           yield

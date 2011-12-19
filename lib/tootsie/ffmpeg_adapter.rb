@@ -1,7 +1,7 @@
 module Tootsie
 
   class FfmpegAdapter
-    
+
     def initialize(options = {})
       @logger = Application.get.logger
       @ffmpeg_binary = 'ffmpeg'
@@ -15,7 +15,7 @@ module Tootsie
       end
       @ffmpeg_arguments['y'] = true
     end
-    
+
     # Transcode a file by taking an input file and writing an output file.
     def transcode(input_filename, output_filename, options = {})
       arguments = @ffmpeg_arguments.dup
@@ -96,19 +96,19 @@ module Tootsie
         end
       end
     end
-    
+
     attr_accessor :ffmpeg_binary
     attr_accessor :ffmpeg_arguments
-    
+
     # Output captured from FFmpeg command line tool so far.
     attr_reader :output
 
     # Progress reporter that implements +call(seconds, total_seconds)+ to record
     # transcoding progress.
     attr_accessor :progress
-    
+
     private
-    
+
       def run_ffmpeg(input_filename, output_filename, arguments, &block)
         command_line = @ffmpeg_binary.dup
         command_line << " -i '#{input_filename}' "
@@ -128,5 +128,5 @@ module Tootsie
       end
 
   end
-    
+
 end

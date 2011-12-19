@@ -5,7 +5,7 @@ require 'set'
 require 'timeout'
 
 class Spawner
-  
+
   def initialize(options = {})
     @num_children = options[:num_children] || 1
     @pids = Set.new
@@ -13,11 +13,11 @@ class Spawner
     @terminating = false
     @parent = true
   end
-  
+
   def on_spawn(&block)
     @on_spawn = block
   end
-  
+
   def run(&block)
     loop do
       unless @terminating
@@ -28,7 +28,7 @@ class Spawner
             @pids << pid
             logger.info("Child PID=#{pid} spawned")
           else
-            # In child process 
+            # In child process
             @parent = false
             @on_spawn.call
             exit(0)
@@ -39,12 +39,12 @@ class Spawner
       break if @terminated and @pids.empty?
     end
   end
-  
+
   def wait_for_children
     pid = Process.waitpid(-1)
     if pid
       status = $?
-      if status.exited? 
+      if status.exited?
         if status.exitstatus == 0
           logger.info("Child PID=#{pid} exited normally")
         else
@@ -60,7 +60,7 @@ class Spawner
       @pids.delete(pid)
     end
   end
-  
+
   def terminate
     if @parent
       logger.info("Parent terminating, will terminate all child PIDs")
@@ -93,7 +93,7 @@ class Spawner
       end
     end
   end
-  
+
   attr_reader :logger
-  
+
 end

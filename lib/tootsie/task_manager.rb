@@ -3,21 +3,21 @@ require 'uri'
 require 'benchmark'
 
 module Tootsie
-  
+
   class TaskManager
-    
+
     def initialize(queue)
       @queue = queue
       @logger = Application.get.logger
     end
-    
+
     def schedule(task)
       type = task.class.name.gsub(/^(?:[^:]+::)*(.*?)Task$/, '\1').underscore
       data = task.attributes
       @logger.info("Scheduling task #{type.inspect}: #{data.inspect}")
       @queue.push({:task => type, :data => data})
     end
-    
+
     def run!
       @logger.info "Ready to process tasks"
       loop do
@@ -45,7 +45,7 @@ module Tootsie
       end
       @logger.info "Task manager done"
     end
-    
+
   end
-  
+
 end

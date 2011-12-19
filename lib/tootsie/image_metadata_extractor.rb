@@ -35,7 +35,7 @@ module Tootsie
           :ignore_exit_code => true
         ).run(params, &block)
       end
-    
+
       def parse_exiv2_line(line)
         if line =~ /^([^\s]+)\s+([^\s]+)\s+\d+  (.*)$/
           key, type, value = $1, $2, $3
